@@ -1,96 +1,62 @@
 import Banner from '../../components/Banner'
 import ProductsList from '../../components/ProductsList'
-import Game from '../../models/Games'
 
-import resident from '../../assets/images/resident.png'
-import diablo from '../../assets/images/diablo.png'
-import starwars from '../../assets/images/star_wars.png'
-import zelda from '../../assets/images/zelda.png'
+import { useGetOnSaleQuery, useGetSoonQuery } from '../../services/api'
 
-const promocoes: Game[] = [
-  {
-    id: 1,
-    category: 'Ação',
-    description: 'Resident Evil 4, Sobrevivencia terror',
-    title: 'Residente Evil 4',
-    system: 'Windows, Linux',
-    infos: ['10%', 'R$ 250,00'],
-    image: resident
-  },
-  {
-    id: 2,
-    category: 'Ação',
-    description: 'Star Wars, Primeira pessoa',
-    title: 'Star Wars',
-    system: 'Windows, Linux',
-    infos: ['10%', 'R$ 250,00'],
-    image: starwars
-  },
-  {
-    id: 3,
-    category: 'RPG',
-    description: 'Diablo IV, RPG Coop',
-    title: 'Diablo IV',
-    system: 'Windows, Linux',
-    infos: ['10%', 'R$ 250,00'],
-    image: diablo
-  },
-  {
-    id: 4,
-    category: 'RPG',
-    description: 'Zelda, RPG Solo',
-    title: 'Zelda',
-    system: 'Windows, Linux',
-    infos: ['10%', 'R$ 250,00'],
-    image: zelda
+export interface GalleryItem {
+  type: 'image' | 'video'
+  url: string
+}
+
+export type Game = {
+  id: number
+  name: string
+  description: string
+  release_date?: string
+  prices: {
+    discount?: number
+    old?: number
+    current?: number
   }
-]
-
-const emBreve: Game[] = [
-  {
-    id: 5,
-    category: 'Ação',
-    description: 'Resident Evil 4, Sobrevivencia terror',
-    title: 'Residente Evil 4',
-    system: 'Windows, Linux',
-    infos: ['17/05/24'],
-    image: resident
-  },
-  {
-    id: 6,
-    category: 'Esportes',
-    description: 'Fifa, Fotebol',
-    title: 'Residente Evil 4',
-    system: 'Windows, Linux',
-    infos: ['17/05/24'],
-    image: diablo
-  },
-  {
-    id: 7,
-    category: 'Luta',
-    description: 'Street Fighter VI, Luta',
-    title: 'Residente Evil 4',
-    system: 'Windows, Linux',
-    infos: ['17/05/24'],
-    image: starwars
-  },
-  {
-    id: 8,
-    category: 'Ação',
-    description: 'Resident Evil 4, Sobrevivencia terror',
-    title: 'Residente Evil 4',
-    system: 'Windows, Linux',
-    infos: ['17/05/24'],
-    image: resident
+  details: {
+    category: string
+    system: string
+    developer: string
+    publisher: string
+    languages: string[]
   }
-]
+  media: {
+    thumbnail: string
+    cover: string
+    gallery: GalleryItem[]
+  }
+}
 
-const Home = () => (
-  <>
-    <Banner />
-    <ProductsList games={promocoes} title="Promoções" background="gray" />
-    <ProductsList games={emBreve} title="Em Breve" background="black" />
-  </>
-)
+const Home = () => {
+  const { data: onSaleGames } = useGetOnSaleQuery()
+  const { data: soonGames } = useGetSoonQuery()
+
+  if (onSaleGames && soonGames) {
+    return (
+      <>
+        <Banner />
+        <ProductsList
+          games={onSaleGames}
+          title="Promoções"
+          background="gray"
+          id="on-sale"
+        />
+        <ProductsList
+          games={soonGames}
+          title="Em Breve"
+          background="black"
+          id="coming-soon"
+        />
+      </>
+    )
+  }
+
+  return <h4>Carregando...</h4>
+}
 
 export default Home

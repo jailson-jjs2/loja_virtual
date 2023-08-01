@@ -1,9 +1,9 @@
 import styled from 'styled-components'
-import { cores } from '../../styles'
+import { breakpoints, cores } from '../../styles'
 import { TagContainer } from '../Tag/styles'
 
 export const Banner = styled.div`
-  position: relative;
+  position: relative; /* PARA Ñ SAIR DO BANNER */
   height: 480px;
   display: block;
   width: 100%;
@@ -13,6 +13,10 @@ export const Banner = styled.div`
   background-size: 100%; /* PARA OCUPAR TODA PAG */
 
   padding-top: 16px;
+
+  @media (max-width: ${breakpoints.tablet}) {
+    background-size: cover;
+  }
 
   /* PARA DEIXAR A IMAGEM OPACA */
   &::after {
