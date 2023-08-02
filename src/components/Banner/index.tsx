@@ -1,8 +1,9 @@
 import Tag from '../Tag'
 import Button from '../Button'
+import Loader from '../Loader'
 
 import { useGetFeatureGameQuery } from '../../services/api'
-import { formataPreco } from '../ProductsList'
+import { formataPreco } from '../../utils'
 
 import { Imagem, Titulo, Precos } from './styles'
 
@@ -10,7 +11,7 @@ const Banner = () => {
   const { data: game } = useGetFeatureGameQuery()
 
   if (!game) {
-    return <h3>Carregando...</h3>
+    return <Loader />
   }
 
   return (

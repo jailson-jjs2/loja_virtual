@@ -77,10 +77,7 @@ const Gallery = ({ defaultCover, name, items }: Props) => {
             <img
               src={fechar}
               alt="Icone de fechar"
-              onClick={() => {
-                closeModal()
-              }}
-            />
+              onClick={closeModal} /> {/* FUNÇÃO SEM ARGUMENTOS */}
           </header>
           {modal.type === 'image' ? (
             <img src={modal.url} />

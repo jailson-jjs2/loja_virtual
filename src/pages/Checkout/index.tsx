@@ -1,4 +1,7 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
+import { RootReducer } from "../../store"
+import { Navigate } from "react-router-dom"
 import * as Yup from "yup"
 import { useFormik } from "formik"
 
@@ -9,12 +12,23 @@ import boleto from '../../assets/images/boleto.png'
 import cartao from '../../assets/images/cartao.png'
 
 import { usePurchaseMutation } from "../../services/api"
+import { formataPreco, getTotalPrice } from "../../utils"
 
 import { InputGroup, Row, TabButton } from "./styles"
+
+type Installment = {
+  quantity: number
+  amount: number
+  formattedAmount: string
+}
 
 const Checkout = () => {
   const [payWithCard, setPayWithCard] = useState(false)
   const [purchase, { data, isSuccess} ] = usePurchaseMutation()
+  const { items } = useSelector((state: RootReducer) => state.cart)
+  const [installments, setInstallments] = useState<Installment[]>([])
+
+  const totalPrice = getTotalPrice(items)
 
   const form = useFormik({
     initialValues: {
@@ -86,12 +100,38 @@ const Checkout = () => {
         }
   })
 
-  const getErrorMessage = (fieldName: string, message?: string) => {
+  const checkInputHasError = (fieldName: string) => {
     const isTrouched = fieldName in form.touched
     const isInvalid = fieldName in form.errors
+    const hasError = isTrouched && isInvalid
 
-    if (isTrouched && isInvalid) return message
-    return ""
+    return hasError
+  }
+
+
+
+  useEffect(() => {
+
+    const calculateInstallments = () => {
+      const installmentArray: Installment[] = []
+      for (let i = 1; i <= 6; i++) {
+        installmentArray.push({
+          quantity: i,
+          amount: totalPrice / i,
+          formattedAmount: formataPreco(totalPrice / i)
+
+        })
+      }
+      return installmentArray
+    }
+
+    if (totalPrice > 0) {
+      setInstallments(calculateInstallments())
+    }
+  }, [totalPrice])
+
+  if (items.length === 0) {
+    return <Navigate to="/" />
   }
 
   return (
@@ -128,42 +168,37 @@ const Checkout = () => {
           <Row>
             <InputGroup>
               <label htmlFor="fullName">Nome Completo</label>
-              <input id="fullName" type="text" name="fullName" value={form.values.fullName} onChange={form.handleChange} onBlur={form.handleBlur} />
-              <small>{getErrorMessage("fullName", form.errors.fullName)}</small>
+              <input id="fullName" type="text" name="fullName" value={form.values.fullName} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('fullName') ? 'error' : ''} />
             </InputGroup>
             <InputGroup>
               <label htmlFor="email">E-mail</label>
-              <input id="email" type="email" name="email" value={form.values.email} onChange={form.handleChange} onBlur={form.handleBlur} />
-              <small>{getErrorMessage("email", form.errors.email)}</small>
+              <input id="email" type="email" name="email" value={form.values.email} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('email') ? 'error' : ''} />
             </InputGroup>
             <InputGroup>
               <label htmlFor="cpf">CPF</label>
-              <input id="cpf" type="text" name="cpf" value={form.values.cpf} onChange={form.handleChange} onBlur={form.handleBlur} />
-              <small>{getErrorMessage("cpf", form.errors.cpf)}</small>
+              <input id="cpf" type="text" name="cpf" value={form.values.cpf} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('cpf') ? 'error' : ''} />
             </InputGroup>
           </Row>
           <h3 className="margin-top">Dados de entrega - conteúdo digital</h3>
           <Row>
             <InputGroup>
               <label htmlFor="deliveryEmail">E-mail</label>
-              <input type="email" id="deliveryEmail" name="deliveryEmail" value={form.values.deliveryEmail} onChange={form.handleChange} onBlur={form.handleBlur} />
-              <small>{getErrorMessage("deliveryEmail", form.errors.deliveryEmail)}</small>
+              <input type="email" id="deliveryEmail" name="deliveryEmail" value={form.values.deliveryEmail} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('deliveryEmail') ? 'error' : ''} />
             </InputGroup>
             <InputGroup>
               <label htmlFor="confirmDeliveryEmail">Confirme o E-mail</label>
-              <input type="email" id="confirmDeliveryEmail" name="confirmDeliveryEmail" value={form.values.confirmDeliveryEmail} onChange={form.handleChange} onBlur={form.handleBlur} />
-              <small>{getErrorMessage("confirmDeliveryEmail", form.errors.confirmDeliveryEmail)}</small>
+              <input type="email" id="confirmDeliveryEmail" name="confirmDeliveryEmail" value={form.values.confirmDeliveryEmail} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('confirmDeliveryEmail') ? 'error' : ''} />
             </InputGroup>
           </Row>
           </>
         </Card>
         <Card title="Pagamento">
           <>
-            <TabButton isActive={!payWithCard} onClick={() => setPayWithCard(false)}>
+            <TabButton isActive={!payWithCard} onClick={() => setPayWithCard(false)} type="button">
               <img src={boleto} alt="Boleto" />
               Boleto bancário
             </TabButton>
-            <TabButton isActive={payWithCard} onClick={() => setPayWithCard(true)}>
+            <TabButton isActive={payWithCard} onClick={() => setPayWithCard(true)} type="button">
               <img src={cartao} alt="Cartão de crédito" />
               Cartão de Crédito
             </TabButton>
@@ -175,52 +210,45 @@ const Checkout = () => {
                       <label htmlFor="cardOwner">
                         Nome do titular do cartão
                       </label>
-                      <input id="cardOwner" type="text" name="cardOwner" value={form.values.cardOwner} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("cardOwner", form.errors.cardOwner)}</small>
+                      <input id="cardOwner" type="text" name="cardOwner" value={form.values.cardOwner} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('cpf') ? 'error' : ''} />
                     </InputGroup>
                     <InputGroup>
                       <label htmlFor="cpfCardOwner">
                         CPF do titular do cartão
                       </label>
-                      <input id="cpfCardOwner" type="text" name="cpfCardOwner" value={form.values.cpfCardOwner} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("cpfCardOwner", form.errors.cpfCardOwner)}</small>
-                    </InputGroup>
+                      <input id="cpfCardOwner" type="text" name="cpfCardOwner" value={form.values.cpfCardOwner} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('cpfCardOwner') ? 'error' : ''} />
+                     </InputGroup>
                   </Row>
                   <Row marginTop="24px">
                   <InputGroup>
                       <label htmlFor="carDisplayName">
                         Nome no cartão
                       </label>
-                      <input id="carDisplayName" type="text" name="carDisplayName" value={form.values.carDisplayName} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("carDisplayName", form.errors.carDisplayName)}</small>
+                      <input id="carDisplayName" type="text" name="carDisplayName" value={form.values.carDisplayName} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('carDisplayName') ? 'error' : ''} />
                     </InputGroup>
                     <InputGroup>
                       <label htmlFor="carNumber">
                       Número do cartão
                       </label>
-                      <input id="carNumber" type="text" name="carNumber" value={form.values.carNumber} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("carNumber", form.errors.carNumber)}</small>
+                      <input id="carNumber" type="text" name="carNumber" value={form.values.carNumber} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('carNumber') ? 'error' : ''} />
                     </InputGroup>
                     <InputGroup maxWidth="123px">
                       <label htmlFor="expiresMonth">
                       Mês do vencimento
                       </label>
-                      <input id="expiresMonth" type="text" name="expiresMonth" value={form.values.expiresMonth} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("expiresMonth", form.errors.expiresMonth)}</small>
-                    </InputGroup>
+                      <input id="expiresMonth" type="text" name="expiresMonth" value={form.values.expiresMonth} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('expiresMonth') ? 'error' : ''} />
+                      </InputGroup>
                     <InputGroup maxWidth="123px">
                       <label htmlFor="expiresYear">
                       Ano do vencimento
                       </label>
-                      <input id="expiresYear" type="text" name="expiresYear" value={form.values.expiresYear} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("expiresYear", form.errors.expiresYear)}</small>
+                      <input id="expiresYear" type="text" name="expiresYear" value={form.values.expiresYear} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('expiresYear') ? 'error' : ''} />
                     </InputGroup>
                     <InputGroup maxWidth="48px">
                       <label htmlFor="cardCode">
                       CVV
                       </label>
-                      <input id="cardCode" type="text" name="cardCode" value={form.values.cardCode} onChange={form.handleChange} onBlur={form.handleBlur} />
-                      <small>{getErrorMessage("cardCode", form.errors.cardCode)}</small>
+                      <input id="cardCode" type="text" name="cardCode" value={form.values.cardCode} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('cardCode') ? 'error' : ''} />
                     </InputGroup>
                   </Row>
                   <Row marginTop="24px">
@@ -228,12 +256,15 @@ const Checkout = () => {
                       <label htmlFor="installments">
                       Parcelamento
                       </label>
-                      <select id="installments" name="installments" value={form.values.installments} onChange={form.handleChange} onBlur={form.handleBlur}>
-                        <option>1x de R$ 200,00</option>
-                        <option>2x de R$ 200,00</option>
-                        <option>3x de R$ 200,00</option>
+                      <select id="installments" name="installments" value={form.values.installments} onChange={form.handleChange} onBlur={form.handleBlur} className={checkInputHasError('installments') ? 'error' : ''} >
+
+                        {installments.map((installment) => (
+                          <option key={installment.quantity}>
+                            {installment.quantity}x de{installment.formattedAmount}
+                          </option>
+                        ))}
+
                       </select>
-                      <small>{getErrorMessage("installments", form.errors.installments)}</small>
                     </InputGroup>
                   </Row>
                   </>
@@ -248,7 +279,7 @@ const Checkout = () => {
           </>
 
         </Card>
-        <Button type="button" onClick={form.handleSubmit} title="Clique aqui para finaliar a compra">
+        <Button type="submit" onClick={form.handleSubmit} title="Clique aqui para finaliar a compra">
           Finalizar compra
         </Button>
       </form>

@@ -2,7 +2,7 @@ import { Game } from '../../pages/Home'
 import Button from '../Button'
 import Tag from '../Tag'
 
-import { formataPreco } from '../ProductsList'
+import { formataPreco } from '../../utils'
 
 import { Banner, Infos } from './styles'
 import { useDispatch } from 'react-redux'
