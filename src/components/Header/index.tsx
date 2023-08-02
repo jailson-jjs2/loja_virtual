@@ -30,7 +30,9 @@ const Header = () => {
             <span />
           </Humburguer>
           <Link to="/">
-            <img src={logo} alt="EPLAY" />
+            <h1>
+              <img src={logo} alt="EPLAY" />
+            </h1>
           </Link>
           <nav>
             <Links>
